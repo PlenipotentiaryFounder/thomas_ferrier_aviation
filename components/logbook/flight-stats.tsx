@@ -61,7 +61,7 @@ export default function FlightStats() {
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Flight Statistics</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             A comprehensive overview of my flight experience across various conditions, aircraft types, and roles.
           </p>
         </div>
@@ -85,7 +85,7 @@ export default function FlightStats() {
                       <p className="text-sm text-muted-foreground">{stat.description}</p>
                     </div>
                   </div>
-                  <p className="text-3xl font-bold mt-4">{stat.value}</p>
+                  <p className="text-2xl font-bold mt-4">{stat.value}</p>
                 </CardContent>
               </Card>
             </motion.div>

@@ -35,7 +35,7 @@ export default function CallToAction({
             className="space-y-4"
           >
             <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">{title}</h2>
-            <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+            <p className="max-w-[600px] text-muted-foreground text-lg md:text-xl/relaxed">
               {description}
             </p>
           </motion.div>

@@ -47,7 +47,7 @@ export default function EndorsementsSection() {
           className="mb-12 text-center"
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Endorsements & Qualifications</h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
             Specialized training and endorsements that enhance my capabilities as a pilot and instructor.
           </p>
         </motion.div>

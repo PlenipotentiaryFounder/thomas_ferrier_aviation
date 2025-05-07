@@ -40,12 +40,12 @@ export default function Footer() {
               </div>
               <span className="font-bold text-xl">Thomas Ferrier</span>
             </Link>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground text-sm sm:text-base mb-6">
               Certified Flight Instructor and aviation innovator based in Phoenix, Arizona. Passionate about flight
               education and pushing the boundaries of aviation technology.
             </p>
             <div className="flex space-x-4">
-              <Button variant="outline" size="icon" className="rounded-full">
+              <Button variant="outline" size="icon" className="rounded-full min-w-10 min-h-10">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="18"
@@ -63,7 +63,7 @@ export default function Footer() {
                 </svg>
                 <span className="sr-only">LinkedIn</span>
               </Button>
-              <Button variant="outline" size="icon" className="rounded-full">
+              <Button variant="outline" size="icon" className="rounded-full min-w-10 min-h-10">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="18"
@@ -80,7 +80,7 @@ export default function Footer() {
                 </svg>
                 <span className="sr-only">GitHub</span>
               </Button>
-              <Button variant="outline" size="icon" className="rounded-full">
+              <Button variant="outline" size="icon" className="rounded-full min-w-10 min-h-10">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="18"

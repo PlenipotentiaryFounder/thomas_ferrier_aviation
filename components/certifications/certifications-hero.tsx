@@ -38,7 +38,7 @@ export default function CertificationsHero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-xl text-muted-foreground max-w-3xl mb-12"
+            className="text-lg md:text-xl text-muted-foreground max-w-3xl mb-12"
           >
             FAA certifications and ratings earned through dedicated training and demonstrated proficiency.
           </motion.p>

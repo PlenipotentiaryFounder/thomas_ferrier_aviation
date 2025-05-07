@@ -110,7 +110,7 @@ export default function AircraftShowcase() {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Aircraft Experience</h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
             Explore the aircraft I've flown and instructed in with our interactive 3D models.
           </p>
         </motion.div>
@@ -136,7 +136,7 @@ export default function AircraftShowcase() {
                   </div>
 
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-2 bg-background/80 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg">
-                    <Button variant="ghost" size="icon" onClick={handleZoomOut} className="h-8 w-8">
+                    <Button variant="ghost" size="icon" onClick={handleZoomOut} className="h-10 w-10">
                       <ZoomOut className="h-4 w-4" />
                     </Button>
                     <div className="w-24 h-1 bg-muted rounded-full overflow-hidden">
@@ -145,14 +145,14 @@ export default function AircraftShowcase() {
                         style={{ width: `${((zoom - 0.5) * 100) / 1.5}%` }}
                       ></div>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={handleZoomIn} className="h-8 w-8">
+                    <Button variant="ghost" size="icon" onClick={handleZoomIn} className="h-10 w-10">
                       <ZoomIn className="h-4 w-4" />
                     </Button>
                     <div className="w-px h-6 bg-border"></div>
-                    <Button variant="ghost" size="icon" onClick={handleRotate} className="h-8 w-8">
+                    <Button variant="ghost" size="icon" onClick={handleRotate} className="h-10 w-10">
                       <RotateCcw className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="h-8 w-8">
+                    <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="h-10 w-10">
                       {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                     </Button>
                   </div>

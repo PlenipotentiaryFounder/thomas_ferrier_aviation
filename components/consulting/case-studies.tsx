@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
+import Image from "next/image"
 
 const caseStudies = [
   {
@@ -36,7 +37,7 @@ export default function CaseStudies() {
         <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
           <div className="space-y-2">
             <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">Case Studies</h2>
-            <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
+            <p className="mx-auto max-w-[700px] text-muted-foreground text-lg md:text-xl">
               Examples of aviation challenges I've helped solve
             </p>
           </div>
@@ -45,11 +46,12 @@ export default function CaseStudies() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {caseStudies.map((study, index) => (
             <Card key={index} className="border-0 shadow-lg overflow-hidden">
-              <div className="aspect-video w-full overflow-hidden">
-                <img
+              <div className="aspect-video w-full overflow-hidden relative">
+                <Image
                   src={study.image || "/placeholder.svg"}
                   alt={study.title}
-                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                  fill
+                  className="object-cover transition-transform duration-300 hover:scale-105"
                 />
               </div>
               <CardHeader>

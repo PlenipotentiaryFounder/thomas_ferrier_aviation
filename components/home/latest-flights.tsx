@@ -52,7 +52,7 @@ export default function LatestFlights() {
         <div className="flex flex-col md:flex-row justify-between items-center mb-16">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Latest Flights</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
               A glimpse into my recent aviation activities and flight experiences.
             </p>
           </div>
@@ -81,7 +81,7 @@ export default function LatestFlights() {
                   </div>
                 </div>
                 <CardContent>
-                  <h3 className="text-xl font-semibold mt-4">{flight.aircraft}</h3>
+                  <h3 className="text-lg font-semibold mt-4">{flight.aircraft}</h3>
                   <p className="text-muted-foreground mt-2">{flight.description}</p>
                   <div className="grid grid-cols-2 gap-2 text-sm mt-4">
                     <div className="flex items-center gap-1.5">

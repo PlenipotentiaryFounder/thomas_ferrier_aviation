@@ -62,7 +62,7 @@ export default function Timeline() {
           className="mb-12 text-center"
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Certification Timeline</h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
             My journey through aviation training and certification milestones.
           </p>
         </motion.div>

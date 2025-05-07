@@ -37,7 +37,7 @@ export default function CallToAction() {
               <Plane className="h-6 w-6 text-primary" />
             </div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">Ready to Elevate Your Aviation Journey?</h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Join my newsletter for aviation tips, industry insights, and updates on my latest projects and flight
               experiences.
             </p>
