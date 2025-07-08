@@ -1,31 +1,51 @@
-"use client"
+'use client'
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ModeToggle } from "./mode-toggle"
+import { ModeToggle } from "@/components/mode-toggle"
 import { Menu, X, Plane } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
 import { useMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
+import type { NavigationMenu, Organization } from "@/types/database"
+import { generateNavigationItems } from "@/lib/dynamic-page"
 
-const navLinks = [
-  { name: "About", href: "/about" },
-  { name: "Certifications", href: "/certifications" },
-  { name: "Experience", href: "/experience" },
-  { name: "Logbook", href: "/logbook" },
-  { name: "Gallery", href: "/gallery" },
-  { name: "Projects", href: "/projects" },
-  { name: "Consulting", href: "/consulting" },
-  { name: "Contact", href: "/contact" },
-]
+interface DynamicNavigationProps {
+  organization: Organization
+  navigation: NavigationMenu | null
+  isEditable?: boolean
+}
 
-export default function Navbar() {
+interface NavLink {
+  name: string
+  href: string
+  isExternal?: boolean
+  order?: number
+}
+
+export default function DynamicNavigation({ 
+  organization, 
+  navigation, 
+  isEditable = false 
+}: DynamicNavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
   const isMobile = useMobile()
+
+  // Generate navigation links from database configuration
+  const navLinks: NavLink[] = generateNavigationItems(navigation).map((item: any) => ({
+    name: item.label,
+    href: item.isExternal ? item.url : `/${item.slug}`,
+    isExternal: item.isExternal || false,
+    order: item.order || 0
+  }))
+
+  // Get logo URL from organization or navigation config
+  const logoUrl = organization.logo_url || (navigation?.style_config as any)?.logoUrl
+  const showLogo = (navigation?.style_config as any)?.showLogo !== false
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,15 +64,28 @@ export default function Navbar() {
       )}
     >
       <div className="container mx-auto px-4 flex justify-between items-center">
+        {/* Logo/Brand */}
         <Link href="/" className="flex items-center space-x-3 group">
           <div className="relative w-10 h-10 flex items-center justify-center">
-            <div className="absolute inset-0 bg-primary/20 rounded-full group-hover:scale-110 transition-transform duration-300"></div>
-            <Plane className="h-6 w-6 text-primary z-10 group-hover:rotate-12 transition-transform duration-300" />
+            {showLogo && logoUrl ? (
+              <img 
+                src={logoUrl} 
+                alt={`${organization.name} logo`}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <>
+                <div className="absolute inset-0 bg-primary/20 rounded-full group-hover:scale-110 transition-transform duration-300"></div>
+                <Plane className="h-6 w-6 text-primary z-10 group-hover:rotate-12 transition-transform duration-300" />
+              </>
+            )}
           </div>
-          <span className="font-bold text-xl tracking-tight">Aviation Pro</span>
+          <span className="font-bold text-xl tracking-tight">
+            {organization.name}
+          </span>
         </Link>
 
-        {/* Mobile Menu Button & ModeToggle - Visible only on screens smaller than md (768px) */}
+        {/* Mobile Menu Button & ModeToggle */}
         <div className="flex items-center space-x-2 md:hidden">
           <ModeToggle />
           <Button
@@ -67,7 +100,7 @@ export default function Navbar() {
           </Button>
         </div>
 
-        {/* Mobile Menu Panel - Conditionally rendered based on isMenuOpen, but structure only relevant for mobile */}
+        {/* Mobile Menu Panel */}
         <div className="md:hidden">
           <AnimatePresence>
             {isMenuOpen && (
@@ -85,6 +118,8 @@ export default function Navbar() {
                     <Link
                       key={link.name}
                       href={link.href}
+                      target={link.isExternal ? "_blank" : undefined}
+                      rel={link.isExternal ? "noopener noreferrer" : undefined}
                       className={cn(
                         "px-4 py-4 transition-colors flex items-center space-x-2",
                         pathname === link.href ? "text-primary font-medium" : "hover:text-primary",
@@ -108,13 +143,15 @@ export default function Navbar() {
           </AnimatePresence>
         </div>
 
-        {/* Desktop Navigation & ModeToggle - Hidden on screens smaller than md, visible on md and up */}
+        {/* Desktop Navigation & ModeToggle */}
         <div className="hidden md:flex items-center space-x-2 lg:space-x-8">
           <nav className="flex flex-wrap space-x-1">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
+                target={link.isExternal ? "_blank" : undefined}
+                rel={link.isExternal ? "noopener noreferrer" : undefined}
                 className={cn(
                   "px-3 lg:px-4 py-2 relative rounded-full transition-colors whitespace-nowrap",
                   pathname === link.href ? "text-primary font-medium" : "hover:text-primary",
@@ -133,7 +170,22 @@ export default function Navbar() {
           </nav>
           <ModeToggle />
         </div>
+
+        {/* Edit navigation overlay for admins */}
+        {isEditable && (
+          <div className="absolute top-full right-4 mt-2">
+            <button
+              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm shadow-lg"
+              onClick={() => {
+                console.log('Edit navigation', navigation)
+                // This would open navigation editor
+              }}
+            >
+              Edit Navigation
+            </button>
+          </div>
+        )}
       </div>
     </header>
   )
-}
+} 
