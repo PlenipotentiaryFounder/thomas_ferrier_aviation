@@ -45,7 +45,8 @@ export async function getPageConfiguration(
     
     if (orgError || !organization) {
       console.error('Organization not found:', orgError)
-      return null
+      // Fallback to example data for thomas-ferrier
+      return getFallbackPageConfiguration(organizationSlug, pageSlug)
     }
 
     // 2. Get page with all component instances and definitions
@@ -79,7 +80,8 @@ export async function getPageConfiguration(
 
     if (pageError || !pageData) {
       console.error('Page not found:', pageError)
-      return null
+      // Fallback to example data
+      return getFallbackPageConfiguration(organizationSlug, pageSlug)
     }
 
     // 3. Get navigation configuration
@@ -111,7 +113,185 @@ export async function getPageConfiguration(
     }
   } catch (error) {
     console.error('Error fetching page configuration:', error)
+    // Fallback to example data
+    return getFallbackPageConfiguration(organizationSlug, pageSlug)
+  }
+}
+
+/**
+ * Fallback page configuration for demo/example users
+ */
+function getFallbackPageConfiguration(organizationSlug: string, pageSlug: string): PageConfiguration | null {
+  // Only provide fallback for thomas-ferrier example
+  if (organizationSlug !== 'thomas-ferrier') {
     return null
+  }
+
+  const exampleOrganization = {
+    id: 'example-org-id',
+    name: 'Thomas Ferrier',
+    slug: 'thomas-ferrier',
+    domain: null,
+    subscription_tier: 'professional',
+    subscription_status: 'active',
+    primary_color: '#1e40af',
+    secondary_color: '#64748b',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+
+  const exampleTheme = {
+    id: 'example-theme-id',
+    organization_id: 'example-org-id',
+    theme_name: 'Neural Interface',
+    theme_key: 'neural-interface',
+    color_palette: {
+      primary: '#1e40af',
+      secondary: '#64748b',
+      accent: '#f59e0b',
+      background: '#ffffff',
+      surface: '#f8fafc',
+      text: '#1f2937',
+      textSecondary: '#6b7280'
+    },
+    typography: {
+      fontFamily: 'Inter',
+      headingFont: 'Space Grotesk'
+    },
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+
+  const pageConfigs: Record<string, any> = {
+    home: {
+      title: 'Home',
+      slug: 'home',
+      components: [
+        {
+          id: 'hero-1',
+          instance_key: 'main-hero',
+          configuration: {
+            title: 'Thomas Ferrier',
+            subtitle: 'Certified Flight Instructor & Aviation Innovator',
+            description: 'Passionate about aviation safety, advanced flight training, and inspiring the next generation of pilots.',
+            backgroundImage: '/images/hero-poster.jpg',
+            ctaText: 'View Experience',
+            ctaLink: '/u/thomas-ferrier/experience'
+          },
+          display_order: 1,
+          is_visible: true,
+          is_enabled: true,
+          definition: {
+            component_key: 'hero_aviation',
+            component_name: 'Aviation Hero',
+            component_category: 'hero'
+          }
+        },
+        {
+          id: 'about-1',
+          instance_key: 'about-section',
+          configuration: {
+            title: 'About Thomas',
+            content: 'With over a decade of aviation experience, Thomas Ferrier has dedicated his career to advancing flight safety and training excellence.',
+            stats: [
+              { label: 'Flight Hours', value: '2,847' },
+              { label: 'Students Trained', value: '156' },
+              { label: 'Years Experience', value: '12' }
+            ]
+          },
+          display_order: 2,
+          is_visible: true,
+          is_enabled: true,
+          definition: {
+            component_key: 'about_professional',
+            component_name: 'Professional About',
+            component_category: 'content'
+          }
+        }
+      ]
+    },
+    about: {
+      title: 'About',
+      slug: 'about',
+      components: [
+        {
+          id: 'about-hero-1',
+          instance_key: 'about-hero',
+          configuration: {
+            title: 'About Thomas Ferrier',
+            subtitle: 'Aviation Professional & Innovator',
+            description: 'Dedicated to excellence in flight training and aviation safety.'
+          },
+          display_order: 1,
+          is_visible: true,
+          is_enabled: true,
+          definition: {
+            component_key: 'hero_simple',
+            component_name: 'Simple Hero',
+            component_category: 'hero'
+          }
+        }
+      ]
+    },
+    experience: {
+      title: 'Experience',
+      slug: 'experience',
+      components: [
+        {
+          id: 'exp-hero-1',
+          instance_key: 'experience-hero',
+          configuration: {
+            title: 'Flight Experience',
+            subtitle: 'Professional Aviation Background',
+            description: 'Comprehensive flight training and operational experience.'
+          },
+          display_order: 1,
+          is_visible: true,
+          is_enabled: true,
+          definition: {
+            component_key: 'hero_simple',
+            component_name: 'Simple Hero',
+            component_category: 'hero'
+          }
+        }
+      ]
+    }
+  }
+
+  const currentPage = pageConfigs[pageSlug]
+  if (!currentPage) {
+    return null
+  }
+
+  return {
+    page: {
+      id: `page-${pageSlug}`,
+      organization_id: 'example-org-id',
+      title: currentPage.title,
+      slug: currentPage.slug,
+      meta_description: `${currentPage.title} - Thomas Ferrier Aviation Professional`,
+      is_published: true,
+      is_visible_in_nav: true,
+      nav_order: 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      components: currentPage.components
+    },
+    organization: exampleOrganization,
+    navigation: {
+      id: 'example-nav',
+      organization_id: 'example-org-id',
+      menu_type: 'primary',
+      menu_items: [
+        { label: 'Home', slug: 'home', order: 1 },
+        { label: 'About', slug: 'about', order: 2 },
+        { label: 'Experience', slug: 'experience', order: 3 },
+        { label: 'Certifications', slug: 'certifications', order: 4 },
+        { label: 'Contact', slug: 'contact', order: 5 }
+      ]
+    },
+    theme: exampleTheme
   }
 }
 

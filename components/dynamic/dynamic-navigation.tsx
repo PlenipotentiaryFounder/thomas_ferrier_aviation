@@ -9,12 +9,13 @@ import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
 import { useMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
-import type { NavigationMenu, Organization } from "@/types/database"
-import { generateNavigationItems } from "@/lib/dynamic-page"
+import type { NavigationMenu, Organization, OrganizationTheme } from "@/types/database"
 
 interface DynamicNavigationProps {
   organization: Organization
-  navigation: NavigationMenu | null
+  navigation?: NavigationMenu | null
+  theme?: OrganizationTheme | null
+  currentPage?: string
   isEditable?: boolean
 }
 
@@ -25,27 +26,38 @@ interface NavLink {
   order?: number
 }
 
-export default function DynamicNavigation({ 
+export function DynamicNavigation({ 
   organization, 
   navigation, 
+  theme,
+  currentPage,
   isEditable = false 
 }: DynamicNavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
-  const isMobile = useMobile()
 
-  // Generate navigation links from database configuration
-  const navLinks: NavLink[] = generateNavigationItems(navigation).map((item: any) => ({
+  // Generate navigation links from database configuration or fallback
+  const defaultNavItems = [
+    { label: 'Home', slug: 'home', order: 1 },
+    { label: 'About', slug: 'about', order: 2 },
+    { label: 'Experience', slug: 'experience', order: 3 },
+    { label: 'Certifications', slug: 'certifications', order: 4 },
+    { label: 'Contact', slug: 'contact', order: 5 }
+  ]
+
+  const navItems = navigation?.menu_items || defaultNavItems
+  
+  const navLinks: NavLink[] = navItems.map((item: any) => ({
     name: item.label,
-    href: item.isExternal ? item.url : `/${item.slug}`,
+    href: item.isExternal ? item.url : (item.slug === 'home' ? `/u/${organization.slug}` : `/u/${organization.slug}/${item.slug}`),
     isExternal: item.isExternal || false,
     order: item.order || 0
-  }))
+  })).sort((a, b) => (a.order || 0) - (b.order || 0))
 
   // Get logo URL from organization or navigation config
-  const logoUrl = organization.logo_url || (navigation?.style_config as any)?.logoUrl
-  const showLogo = (navigation?.style_config as any)?.showLogo !== false
+  const logoUrl = organization.logo_url
+  const showLogo = true
 
   useEffect(() => {
     const handleScroll = () => {
@@ -56,16 +68,23 @@ export default function DynamicNavigation({
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  // Apply theme styles if available
+  const themeStyles = theme?.color_palette ? {
+    '--color-primary': (theme.color_palette as any).primary,
+    '--color-secondary': (theme.color_palette as any).secondary,
+  } as React.CSSProperties : {}
+
   return (
     <header
       className={cn(
         "fixed top-0 w-full z-50 transition-all duration-500",
         isScrolled ? "bg-background/80 backdrop-blur-xl shadow-lg py-3" : "bg-transparent py-6",
       )}
+      style={themeStyles}
     >
       <div className="container mx-auto px-4 flex justify-between items-center">
         {/* Logo/Brand */}
-        <Link href="/" className="flex items-center space-x-3 group">
+        <Link href={`/u/${organization.slug}`} className="flex items-center space-x-3 group">
           <div className="relative w-10 h-10 flex items-center justify-center">
             {showLogo && logoUrl ? (
               <img 

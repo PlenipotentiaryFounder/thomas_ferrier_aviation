@@ -86,6 +86,32 @@ export const COMPONENT_REGISTRY: Record<string, React.ComponentType<DynamicCompo
     ...config
   })),
   
+  // Aviation hero variants for user pages
+  'hero_aviation': createComponentAdapter(Hero, (config) => ({
+    title: config.title,
+    subtitle: config.subtitle,
+    description: config.description,
+    backgroundImage: config.backgroundImage || '/images/hero-poster.jpg',
+    ctaText: config.ctaText,
+    ctaLink: config.ctaLink,
+    ...config
+  })),
+  
+  'hero_simple': createComponentAdapter(HeroSection, (config) => ({
+    title: config.title,
+    subtitle: config.subtitle,
+    description: config.description,
+    ...config
+  })),
+  
+  // About section variants
+  'about_professional': createComponentAdapter(About, (config) => ({
+    title: config.title,
+    content: config.content,
+    stats: config.stats,
+    ...config
+  })),
+  
   // Aviation-themed hero variants
   'hero_banner_sleek': createComponentAdapter(HeroSleek),
   'hero_banner_professional': createComponentAdapter(HeroProfessional),
