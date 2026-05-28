@@ -76,77 +76,50 @@ function createComponentAdapter(
   }
 }
 
+// Helper to inject variant from theme into config
+function withVariant(config: any, theme: any) {
+  return {
+    ...config,
+    variant: theme?.theme_key || config.variant || 'neural-interface',
+  }
+}
+
 // Component registry mapping database keys to your existing React components
-export const COMPONENT_REGISTRY: Record<string, React.ComponentType<DynamicComponentProps>> = {
+export const COMPONENT_REGISTRY: Record<string, (props: DynamicComponentProps & { theme?: any }) => JSX.Element> = {
   // Main page components (full sections)
-  'hero_banner': createComponentAdapter(Hero, (config) => ({
-    title: config.title || 'THOMAS FERRIER',
-    subtitle: config.subtitle || 'CERTIFIED FLIGHT INSTRUCTOR & AVIATION INNOVATOR',
-    backgroundImage: config.backgroundImage,
-    ...config
-  })),
-  
-  // Aviation hero variants for user pages
-  'hero_aviation': createComponentAdapter(Hero, (config) => ({
-    title: config.title,
-    subtitle: config.subtitle,
-    description: config.description,
-    backgroundImage: config.backgroundImage || '/images/hero-poster.jpg',
-    ctaText: config.ctaText,
-    ctaLink: config.ctaLink,
-    ...config
-  })),
-  
-  'hero_simple': createComponentAdapter(HeroSection, (config) => ({
-    title: config.title,
-    subtitle: config.subtitle,
-    description: config.description,
-    ...config
-  })),
-  
+  'hero_banner': (props) => createComponentAdapter(Hero, (config) => withVariant(config, props.theme))(props),
+  'hero_aviation': (props) => createComponentAdapter(Hero, (config) => withVariant(config, props.theme))(props),
+  'hero_simple': (props) => createComponentAdapter(HeroSection, (config) => withVariant(config, props.theme))(props),
   // About section variants
-  'about_professional': createComponentAdapter(About, (config) => ({
-    title: config.title,
-    content: config.content,
-    stats: config.stats,
-    ...config
-  })),
-  
-  // Aviation-themed hero variants
-  'hero_banner_sleek': createComponentAdapter(HeroSleek),
-  'hero_banner_professional': createComponentAdapter(HeroProfessional),
-  'hero_banner_modern': createComponentAdapter(HeroModern),
-
-  // Next-generation 2025 components with cutting-edge design
-  'cockpit_dashboard': createComponentAdapter(CockpitDashboard),
-  'immersive_navigation': createComponentAdapter(ImmersiveNavigation),
-  'liquid_glass_stats': createComponentAdapter(LiquidGlassStats),
-  
-  'about_section': createComponentAdapter(About),
-  'experience_section': createComponentAdapter(Experience),
-  'certifications_section': createComponentAdapter(Certifications),
-  'gallery_section': createComponentAdapter(Gallery),
-  'projects_section': createComponentAdapter(Projects),
-  'contact_section': createComponentAdapter(Contact),
-  'logbook_section': createComponentAdapter(FlightLogbook),
-
+  'about_professional': (props) => createComponentAdapter(About, (config) => withVariant(config, props.theme))(props),
+  'hero_banner_sleek': (props) => createComponentAdapter(HeroSleek, (config) => withVariant(config, props.theme))(props),
+  'hero_banner_professional': (props) => createComponentAdapter(HeroProfessional, (config) => withVariant(config, props.theme))(props),
+  'hero_banner_modern': (props) => createComponentAdapter(HeroModern, (config) => withVariant(config, props.theme))(props),
+  'cockpit_dashboard': (props) => createComponentAdapter(CockpitDashboard, (config) => withVariant(config, props.theme))(props),
+  'immersive_navigation': (props) => createComponentAdapter(ImmersiveNavigation, (config) => withVariant(config, props.theme))(props),
+  'liquid_glass_stats': (props) => createComponentAdapter(LiquidGlassStats, (config) => withVariant(config, props.theme))(props),
+  'about_section': (props) => createComponentAdapter(About, (config) => withVariant(config, props.theme))(props),
+  'experience_section': (props) => createComponentAdapter(Experience, (config) => withVariant(config, props.theme))(props),
+  'certifications_section': (props) => createComponentAdapter(Certifications, (config) => withVariant(config, props.theme))(props),
+  'gallery_section': (props) => createComponentAdapter(Gallery, (config) => withVariant(config, props.theme))(props),
+  'projects_section': (props) => createComponentAdapter(Projects, (config) => withVariant(config, props.theme))(props),
+  'contact_section': (props) => createComponentAdapter(Contact, (config) => withVariant(config, props.theme))(props),
+  'logbook_section': (props) => createComponentAdapter(FlightLogbook, (config) => withVariant(config, props.theme))(props),
   // Home page sub-components
-  'home_hero': createComponentAdapter(HeroSection),
-  'call_to_action': createComponentAdapter(CallToAction),
-  'testimonials_slider': createComponentAdapter(TestimonialsSection),
-  'featured_section': createComponentAdapter(FeaturedSection),
-  'consulting_section': createComponentAdapter(ConsultingSection),
-  'latest_flights': createComponentAdapter(LatestFlights),
-
+  'home_hero': (props) => createComponentAdapter(HeroSection, (config) => withVariant(config, props.theme))(props),
+  'call_to_action': (props) => createComponentAdapter(CallToAction, (config) => withVariant(config, props.theme))(props),
+  'testimonials_slider': (props) => createComponentAdapter(TestimonialsSection, (config) => withVariant(config, props.theme))(props),
+  'featured_section': (props) => createComponentAdapter(FeaturedSection, (config) => withVariant(config, props.theme))(props),
+  'consulting_section': (props) => createComponentAdapter(ConsultingSection, (config) => withVariant(config, props.theme))(props),
+  'latest_flights': (props) => createComponentAdapter(LatestFlights, (config) => withVariant(config, props.theme))(props),
   // Aviation-specific components
-  'certifications_hero': createComponentAdapter(CertificationsHero),
-  'certifications_list': createComponentAdapter(CertificationsList),
-  'endorsements_section': createComponentAdapter(EndorsementsSection),
-  'certifications_timeline': createComponentAdapter(Timeline),
-
+  'certifications_hero': (props) => createComponentAdapter(CertificationsHero, (config) => withVariant(config, props.theme))(props),
+  'certifications_list': (props) => createComponentAdapter(CertificationsList, (config) => withVariant(config, props.theme))(props),
+  'endorsements_section': (props) => createComponentAdapter(EndorsementsSection, (config) => withVariant(config, props.theme))(props),
+  'certifications_timeline': (props) => createComponentAdapter(Timeline, (config) => withVariant(config, props.theme))(props),
   // Navigation components (these will use dynamic config)
-  'primary_navigation': createComponentAdapter(() => null, () => ({})), // Will be handled by layout
-  'footer_basic': createComponentAdapter(() => null, () => ({})), // Will be handled by layout
+  'primary_navigation': (props) => createComponentAdapter(() => null, () => ({}))(props), // Will be handled by layout
+  'footer_basic': (props) => createComponentAdapter(() => null, () => ({}))(props), // Will be handled by layout
 }
 
 // Fallback component for unknown component types
@@ -165,7 +138,8 @@ export function renderDynamicComponent(
   instance: ComponentInstance & { definition: ComponentDefinition },
   organizationId: string,
   isEditable: boolean = false,
-  onUpdate?: (instanceId: string, newConfig: any) => void
+  onUpdate?: (instanceId: string, newConfig: any) => void,
+  theme?: any
 ): React.ReactElement {
   const componentKey = instance.definition.component_key
   const Component = COMPONENT_REGISTRY[componentKey] || UnknownComponent
@@ -180,6 +154,7 @@ export function renderDynamicComponent(
       isEditable={isEditable}
       onUpdate={handleUpdate}
       className={`component-${componentKey} ${!instance.is_visible ? 'opacity-50' : ''}`}
+      theme={theme}
     />
   )
 }

@@ -51,7 +51,8 @@ export function DynamicPage({
             componentInstance,
             organization.id,
             isEditable,
-            onComponentUpdate
+            onComponentUpdate,
+            theme // pass theme to registry for variant injection
           )
         )}
       </div>

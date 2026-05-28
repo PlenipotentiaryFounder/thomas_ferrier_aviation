@@ -84,7 +84,7 @@ export default function PlatformHero() {
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
             asChild
           >
-            <Link href="/contact">
+            <Link href="/sign-up">
               Start Your Custom Website
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>

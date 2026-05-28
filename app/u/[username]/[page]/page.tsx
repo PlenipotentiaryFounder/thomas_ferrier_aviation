@@ -1,5 +1,7 @@
+import DynamicPage from '@/components/dynamic/dynamic-page'
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
+import { createClient } from '@/utils/supabase/server'
 
 interface UserSubPageProps {
   params: {
@@ -16,28 +18,54 @@ export async function generateMetadata({ params }: UserSubPageProps): Promise<Me
 }
 
 export default async function UserSubPage({ params }: UserSubPageProps) {
-  // Simple fallback for Thomas Ferrier for now
-  if (params.username !== 'thomas-ferrier') {
+  const supabase = await createClient()
+
+  // 1. Look up the user by username
+  const { data: userProfile, error: userError } = await supabase
+    .from('profiles')
+    .select('id, name, username, bio')
+    .eq('username', params.username)
+    .single()
+  if (userError || !userProfile) {
     notFound()
   }
 
-  const allowedPages = ['about', 'experience', 'certifications', 'contact', 'logbook', 'gallery', 'projects']
-  if (!allowedPages.includes(params.page)) {
+  // 2. Fetch the requested page by slug and user_id
+  const { data: page, error: pageError } = await supabase
+    .from('pages')
+    .select('*')
+    .eq('user_id', userProfile.id)
+    .eq('slug', params.page)
+    .eq('is_published', true)
+    .single()
+  if (pageError || !page) {
     notFound()
+  }
+
+  // 3. Parse the page content/config for DynamicPage
+  let pageConfig
+  try {
+    pageConfig = typeof page.content === 'string' ? JSON.parse(page.content) : page.content
+  } catch (e) {
+    pageConfig = null
+  }
+  if (!pageConfig) {
+    // fallback: show error or not found
+    notFound()
+  }
+
+  // 4. Add user/org info to config if needed
+  pageConfig.organization = {
+    id: userProfile.id,
+    name: userProfile.name,
+    username: userProfile.username,
+    // Add more org/user fields as needed
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold">{params.page.charAt(0).toUpperCase() + params.page.slice(1)}</h1>
-        <p className="text-xl text-muted-foreground">Thomas Ferrier - {params.page}</p>
-        <p className="text-lg">Dynamic subpage routing is working!</p>
-        <div className="mt-8 space-x-4">
-          <a href={`/u/${params.username}`} className="text-primary underline">← Back to Home</a>
-          <a href={`/u/${params.username}/about`} className="text-primary underline">About</a>
-          <a href={`/u/${params.username}/experience`} className="text-primary underline">Experience</a>
-          <a href={`/u/${params.username}/contact`} className="text-primary underline">Contact</a>
-        </div>
+    <main className="flex min-h-screen flex-col items-center justify-center w-full">
+      <div className="w-full">
+        <DynamicPage pageConfig={pageConfig} />
       </div>
     </main>
   )

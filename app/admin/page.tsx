@@ -29,6 +29,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { createClient } from '@/utils/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface PageInfo {
   page_identifier: string;
@@ -64,105 +66,236 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTheme, setSelectedTheme] = useState("neural-interface");
+  // Remove: const [pages, setPages] = useState<PageInfo[]>([]);
+  // Remove: const [loadingPages, setLoadingPages] = useState(true);
+
+  // Modal state for creating a new page
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newPageTitle, setNewPageTitle] = useState('');
+  const [newPageSlug, setNewPageSlug] = useState('');
+
+  // Inline edit state
+  const [editingPageId, setEditingPageId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+
+  const queryClient = useQueryClient();
+
+  // Create Page Mutation
+  const {
+    mutate: createPage,
+    isLoading: isCreatingPage,
+    isError: isCreatePageError,
+    error: createPageError
+  } = useMutation({
+    mutationFn: async (newPage: Partial<PageInfo>) => {
+      const supabase = createClient();
+      const { error } = await supabase.from('pages').insert([newPage]);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pages'] });
+    },
+  });
+
+  // Update Page Mutation
+  const {
+    mutate: updatePage,
+    isLoading: isUpdatingPage,
+    isError: isUpdatePageError,
+    error: updatePageError
+  } = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<PageInfo> }) => {
+      const supabase = createClient();
+      const { error } = await supabase.from('pages').update(updates).eq('id', id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pages'] });
+    },
+  });
+
+  // Delete Page Mutation
+  const {
+    mutate: deletePage,
+    isLoading: isDeletingPage,
+    isError: isDeletePageError,
+    error: deletePageError
+  } = useMutation({
+    mutationFn: async (id: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.from('pages').delete().eq('id', id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pages'] });
+    },
+  });
+
+  const {
+    data: pages = [],
+    isLoading: loadingPages,
+    isError: errorPages,
+    error: pagesError
+  } = useQuery({
+    queryKey: ['pages'],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('pages')
+        .select('*')
+        .order('nav_order', { ascending: true });
+      if (error) throw new Error(error.message);
+      return (data || []).map((row: any) => ({
+        page_identifier: row.slug || row.page_identifier,
+        admin_display_title: row.title || row.admin_display_title,
+        last_updated: row.updated_at ? new Date(row.updated_at).toISOString().slice(0, 10) : '',
+        status: row.is_published ? 'published' : 'draft',
+        views: row.views || 0,
+      }));
+    },
+  });
+
+  const {
+    data: themes = [],
+    isLoading: loadingThemes,
+    isError: errorThemes,
+    error: themesError
+  } = useQuery({
+    queryKey: ['themes'],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('themes')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (error) throw new Error(error.message);
+      return (data || []).map((row: any) => ({
+        id: row.theme_id || row.id,
+        name: row.name,
+        description: row.description,
+        preview: row.preview_image || '',
+        category: row.category || '',
+        isPremium: row.is_premium || false,
+      }));
+    },
+  });
+
+  const {
+    data: analyticsData,
+    isLoading: loadingAnalytics,
+    isError: errorAnalytics,
+    error: analyticsError
+  } = useQuery({
+    queryKey: ['analytics'],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('analytics_events')
+        .select('*');
+      if (error) throw new Error(error.message);
+
+      // Aggregate analytics data
+      const totalViews = data.length;
+      const uniqueVisitors = new Set(data.map((e: any) => e.user_session)).size;
+      // Calculate average session duration if available (placeholder logic)
+      const averageSessionDuration = '3:42';
+      // Top pages by views
+      const pageViews: Record<string, number> = {};
+      data.forEach((e: any) => {
+        if (!pageViews[e.page_path]) pageViews[e.page_path] = 0;
+        pageViews[e.page_path]++;
+      });
+      const topPages = Object.entries(pageViews)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([page, views]) => ({ page, views, change: 0 }));
+      // Recent visitors (last 5 events)
+      const recentVisitors = data.slice(-5).reverse().map((e: any) => ({
+        location: e.user_location || 'Unknown',
+        time: new Date(e.created_at).toLocaleTimeString(),
+        page: e.page_path || 'Unknown',
+      }));
+      // Performance metrics (placeholder)
+      const performanceMetrics = {
+        loadTime: 1.2,
+        mobileScore: 96,
+        desktopScore: 98,
+      };
+      return {
+        totalViews,
+        uniqueVisitors,
+        averageSessionDuration,
+        topPages,
+        recentVisitors,
+        performanceMetrics,
+      };
+    },
+  });
 
   // Mock data - would come from API/database
-  const editablePages: PageInfo[] = [
-    {
-      page_identifier: 'home',
-      admin_display_title: 'Homepage',
-      last_updated: '2024-01-15',
-      status: 'published',
-      views: 1247
-    },
-    {
-      page_identifier: 'about',
-      admin_display_title: 'About Page',
-      last_updated: '2024-01-14',
-      status: 'published',
-      views: 823
-    },
-    {
-      page_identifier: 'experience',
-      admin_display_title: 'Flight Experience',
-      last_updated: '2024-01-13',
-      status: 'published',
-      views: 692
-    },
-    {
-      page_identifier: 'certifications',
-      admin_display_title: 'Certifications & Ratings',
-      last_updated: '2024-01-12',
-      status: 'draft',
-      views: 456
-    },
-    {
-      page_identifier: 'gallery',
-      admin_display_title: 'Photo Gallery',
-      last_updated: '2024-01-11',
-      status: 'published',
-      views: 334
-    }
-  ];
+  // const editablePages: PageInfo[] = [
+  //   {
+  //     page_identifier: 'home',
+  //     admin_display_title: 'Homepage',
+  //     last_updated: '2024-01-15',
+  //     status: 'published',
+  //     views: 1247
+  //   },
+  //   {
+  //     page_identifier: 'about',
+  //     admin_display_title: 'About Page',
+  //     last_updated: '2024-01-14',
+  //     status: 'published',
+  //     views: 823
+  //   },
+  //   {
+  //     page_identifier: 'experience',
+  //     admin_display_title: 'Flight Experience',
+  //     last_updated: '2024-01-13',
+  //     status: 'published',
+  //     views: 692
+  //   },
+  //   {
+  //     page_identifier: 'certifications',
+  //     admin_display_title: 'Certifications & Ratings',
+  //     last_updated: '2024-01-12',
+  //     status: 'draft',
+  //     views: 456
+  //   },
+  //   {
+  //     page_identifier: 'gallery',
+  //     admin_display_title: 'Photo Gallery',
+  //     last_updated: '2024-01-11',
+  //     status: 'published',
+  //     views: 334
+  //   }
+  // ];
 
-  const analyticsData: AnalyticsData = {
-    totalViews: 4892,
-    uniqueVisitors: 3247,
-    averageSessionDuration: "3:42",
-    topPages: [
-      { page: "Homepage", views: 1247, change: 12 },
-      { page: "About", views: 823, change: -3 },
-      { page: "Experience", views: 692, change: 8 },
-      { page: "Certifications", views: 456, change: 15 },
-      { page: "Gallery", views: 334, change: -1 }
-    ],
-    recentVisitors: [
-      { location: "Phoenix, AZ", time: "2 mins ago", page: "Homepage" },
-      { location: "Dallas, TX", time: "5 mins ago", page: "Experience" },
-      { location: "Denver, CO", time: "8 mins ago", page: "About" },
-      { location: "Atlanta, GA", time: "12 mins ago", page: "Certifications" },
-      { location: "Los Angeles, CA", time: "15 mins ago", page: "Gallery" }
-    ],
-    performanceMetrics: {
-      loadTime: 1.2,
-      mobileScore: 96,
-      desktopScore: 98
-    }
-  };
-
-  const themeOptions: ThemeOption[] = [
-    {
-      id: "neural-interface",
-      name: "Neural Interface",
-      description: "Brain-computer interface aesthetics with blue accents",
-      preview: "bg-gradient-to-br from-blue-900 to-slate-900",
-      category: "Premium",
-      isPremium: true
-    },
-    {
-      id: "liquid-glass",
-      name: "Liquid Glass",
-      description: "Apple's revolutionary interface material",
-      preview: "bg-gradient-to-br from-cyan-900 to-blue-900",
-      category: "Premium",
-      isPremium: true
-    },
-    {
-      id: "holographic",
-      name: "Holographic",
-      description: "Volumetric holographic displays",
-      preview: "bg-gradient-to-br from-purple-900 to-pink-900",
-      category: "Premium",
-      isPremium: true
-    },
-    {
-      id: "professional",
-      name: "Professional",
-      description: "Clean, modern business design",
-      preview: "bg-gradient-to-br from-slate-800 to-gray-900",
-      category: "Standard",
-      isPremium: false
-    }
-  ];
+  // Remove the analyticsData mock object
+  // const analyticsData: AnalyticsData = {
+  //   totalViews: 4892,
+  //   uniqueVisitors: 3247,
+  //   averageSessionDuration: "3:42",
+  //   topPages: [
+  //     { page: "Homepage", views: 1247, change: 12 },
+  //     { page: "About", views: 823, change: -3 },
+  //     { page: "Experience", views: 692, change: 8 },
+  //     { page: "Certifications", views: 456, change: 15 },
+  //     { page: "Gallery", views: 334, change: -1 }
+  //   ],
+  //   recentVisitors: [
+  //     { location: "Phoenix, AZ", time: "2 mins ago", page: "Homepage" },
+  //     { location: "Dallas, TX", time: "5 mins ago", page: "Experience" },
+  //     { location: "Denver, CO", time: "8 mins ago", page: "About" },
+  //     { location: "Atlanta, GA", time: "12 mins ago", page: "Certifications" },
+  //     { location: "Los Angeles, CA", time: "15 mins ago", page: "Gallery" }
+  //   ],
+  //   performanceMetrics: {
+  //     loadTime: 1.2,
+  //     mobileScore: 96,
+  //     desktopScore: 98
+  //   }
+  // };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -173,7 +306,8 @@ export default function AdminDashboard() {
     }
   };
 
-  const filteredPages = editablePages.filter(page =>
+  // Update filteredPages to use pages from useQuery
+  const filteredPages = pages.filter(page =>
     page.admin_display_title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -201,7 +335,7 @@ export default function AdminDashboard() {
                 <Eye className="w-4 h-4" />
                 Preview Site
               </Button>
-              <Button className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+              <Button className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" onClick={() => setShowCreateModal(true)}>
                 <Plus className="w-4 h-4" />
                 Add Content
               </Button>
@@ -221,7 +355,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-100 text-sm">Total Views</p>
-                  <p className="text-2xl font-bold">{analyticsData.totalViews.toLocaleString()}</p>
+                  <p className="text-2xl font-bold">{analyticsData?.totalViews.toLocaleString()}</p>
                 </div>
                 <TrendingUp className="w-8 h-8 text-blue-200" />
               </div>
@@ -233,7 +367,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-green-100 text-sm">Unique Visitors</p>
-                  <p className="text-2xl font-bold">{analyticsData.uniqueVisitors.toLocaleString()}</p>
+                  <p className="text-2xl font-bold">{analyticsData?.uniqueVisitors.toLocaleString()}</p>
                 </div>
                 <Users className="w-8 h-8 text-green-200" />
               </div>
@@ -245,7 +379,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-purple-100 text-sm">Avg. Session</p>
-                  <p className="text-2xl font-bold">{analyticsData.averageSessionDuration}</p>
+                  <p className="text-2xl font-bold">{analyticsData?.averageSessionDuration}</p>
                 </div>
                 <Calendar className="w-8 h-8 text-purple-200" />
               </div>
@@ -257,7 +391,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-orange-100 text-sm">Performance</p>
-                  <p className="text-2xl font-bold">{analyticsData.performanceMetrics.mobileScore}/100</p>
+                  <p className="text-2xl font-bold">{analyticsData?.performanceMetrics.mobileScore}/100</p>
                 </div>
                 <Zap className="w-8 h-8 text-orange-200" />
               </div>
@@ -309,7 +443,7 @@ export default function AdminDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {analyticsData.topPages.map((page, index) => (
+                      {analyticsData?.topPages.map((page, index) => (
                         <div key={page.page} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400 font-semibold text-sm">
@@ -341,7 +475,7 @@ export default function AdminDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {analyticsData.recentVisitors.map((visitor, index) => (
+                      {analyticsData?.recentVisitors.map((visitor, index) => (
                         <div key={index} className="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-700 rounded-lg">
                           <div>
                             <p className="font-medium text-sm">{visitor.location}</p>
@@ -375,51 +509,43 @@ export default function AdminDashboard() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {loadingPages && <div>Loading pages...</div>}
+                {errorPages && <div>Error loading pages: {pagesError.message}</div>}
                 {filteredPages.map((page) => (
-                  <motion.div
-                    key={page.page_identifier}
-                    whileHover={{ scale: 1.02 }}
-                    className="group"
-                  >
-                    <Card className="cursor-pointer transition-all duration-200 group-hover:shadow-lg">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                              <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-slate-900 dark:text-white">
-                                {page.admin_display_title}
-                              </h3>
-                              <p className="text-sm text-slate-500">
-                                {page.views} views
-                              </p>
-                            </div>
-                          </div>
-                          <div className={`w-3 h-3 rounded-full ${getStatusColor(page.status)}`} />
-                        </div>
-                        
-                        <div className="flex items-center justify-between mb-4">
-                          <Badge variant="outline" className="text-xs">
-                            {page.status.charAt(0).toUpperCase() + page.status.slice(1)}
-                          </Badge>
-                          <span className="text-xs text-slate-400">
-                            Updated {page.last_updated}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <Button size="sm" variant="outline" className="flex-1">
-                            <Edit3 className="w-4 h-4 mr-2" />
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                  <motion.div key={page.page_identifier} className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-lg mb-2">
+                    {editingPageId === page.page_identifier ? (
+                      <>
+                        <input
+                          className="p-2 border rounded mr-2"
+                          value={editTitle}
+                          onChange={e => setEditTitle(e.target.value)}
+                        />
+                        <Button
+                          onClick={() => {
+                            updatePage({ id: page.page_identifier, updates: { title: editTitle, updated_at: new Date().toISOString() } });
+                            setEditingPageId(null);
+                          }}
+                          disabled={isUpdatingPage}
+                        >
+                          {isUpdatingPage ? 'Saving...' : 'Save'}
+                        </Button>
+                        <Button onClick={() => setEditingPageId(null)} variant="outline">Cancel</Button>
+                        {isUpdatePageError && <span className="text-red-500 ml-2">{updatePageError.message}</span>}
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex-1 font-semibold">{page.admin_display_title}</span>
+                        <Button onClick={() => { setEditingPageId(page.page_identifier); setEditTitle(page.admin_display_title); }} variant="outline">Edit</Button>
+                        <Button
+                          onClick={() => deletePage(page.page_identifier)}
+                          disabled={isDeletingPage}
+                          variant="destructive"
+                        >
+                          {isDeletingPage ? 'Deleting...' : 'Delete'}
+                        </Button>
+                        {isDeletePageError && <span className="text-red-500 ml-2">{deletePageError.message}</span>}
+                      </>
+                    )}
                   </motion.div>
                 ))}
               </div>
@@ -435,7 +561,9 @@ export default function AdminDashboard() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {themeOptions.map((theme) => (
+                {loadingThemes && <div>Loading themes...</div>}
+                {errorThemes && <div>Error loading themes: {themesError.message}</div>}
+                {themes.map((theme) => (
                   <motion.div
                     key={theme.id}
                     whileHover={{ scale: 1.02 }}
@@ -537,6 +665,50 @@ export default function AdminDashboard() {
           </Tabs>
         </motion.div>
       </div>
+
+      {/* Modal for creating a new page */}
+      {showCreateModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Create New Page</h2>
+            <input
+              className="w-full mb-2 p-2 border rounded"
+              placeholder="Page Title"
+              value={newPageTitle}
+              onChange={e => setNewPageTitle(e.target.value)}
+            />
+            <input
+              className="w-full mb-4 p-2 border rounded"
+              placeholder="Page Slug (e.g. about)"
+              value={newPageSlug}
+              onChange={e => setNewPageSlug(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <Button onClick={() => setShowCreateModal(false)} variant="outline">Cancel</Button>
+              <Button
+                onClick={() => {
+                  createPage({
+                    title: newPageTitle,
+                    slug: newPageSlug,
+                    is_published: false,
+                    is_visible_in_nav: false,
+                    nav_order: 0,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  });
+                  setShowCreateModal(false);
+                  setNewPageTitle('');
+                  setNewPageSlug('');
+                }}
+                disabled={isCreatingPage || !newPageTitle || !newPageSlug}
+              >
+                {isCreatingPage ? 'Creating...' : 'Create'}
+              </Button>
+            </div>
+            {isCreatePageError && <div className="text-red-500 mt-2">{createPageError.message}</div>}
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

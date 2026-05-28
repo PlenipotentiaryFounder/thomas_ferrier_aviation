@@ -18,7 +18,7 @@ const navLinks = [
   { name: "Gallery", href: "/gallery" },
   { name: "Projects", href: "/projects" },
   { name: "Consulting", href: "/consulting" },
-  { name: "Contact", href: "/contact" },
+  { name: "Get Started", href: "/sign-up" },
 ]
 
 export default function Navbar() {
